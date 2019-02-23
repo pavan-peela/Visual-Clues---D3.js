@@ -1,0 +1,388 @@
+<!-- 
+HTML Color Codes : https://htmlcolorcodes.com/
+Slider information : https://www.w3schools.com/howto/howto_js_rangeslider.asp
+Pie Pop up : http://bl.ocks.org/Caged/6476579
+Pie Reference : https://bl.ocks.org/santi698/f3685ca8a1a7f5be1967f39f367437c0
+Bar Reference : TA given files
+-->
+
+<!doctype html>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="mycss.css">
+    <style>
+        .bar {
+            fill: #BCC551;
+        }
+
+        .ov { fill: #E19183; }
+</style>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+</head>
+<body align="center">
+    <!-- Attribute Container -->
+    <div class="container">
+        <div id="select_menu" class="div1"></div>
+        <div class="div2"><input type="range" min="1" max="14" value="2" class="slider" id="bin_range" /></div>
+        <div class="div3"><button id="pie_bar" >Pie - Bar</button></div>>
+    </div>
+    <!-- SVG Container -->
+    <div class="my_svg">
+        <svg id="bar" height="450" width="700"></svg>
+        <svg id="pie" height="450" width="700"></svg>
+    </div>
+
+<script>
+
+    // SVG attributes
+    var svg = d3.select("svg")
+
+    var tick_bins = 4
+
+    var padding = {top:100, right:100, bottom:100, left:100}
+
+    var bar_width = svg.attr("width") - padding.left - padding.right
+
+    var bar_height = svg.attr("height") - padding.top - padding.bottom
+
+    // Tranforming SVG to be at center
+    var g = svg.append("g")
+            .attr("transform", "translate(" + 100 + "," + 100 + ")");
+
+    // This is an initialization for hover text in pie chart (tool-tip)
+    var pie_text = d3.select("body")
+                            .append("div")
+                            .attr("class","pie_text")
+
+    // Reading CSV
+    d3.csv("graduate-admissions/data_2.csv", function(err, data) {
+
+        // This is for getting the columns which is used to fill the dropdown
+        var column_fills = d3.values(data)[0]
+        console.log(column_fills)
+
+        console.log(data)
+        if (err) throw err
+        // data.forEach(function(d){
+
+        //     GRE_Score = +d.GRE_Score
+        //     TOEFL_Score = +d.TOEFL_Score
+        //     University_Rating = +d.University_Rating
+        //     SOP = +d.SOP
+        //     LOR  = +d.LOR
+        //     CGPA  = +d.CGPA
+        //     Fees  = +d.Fees
+        //     Poissan  = +d.Poissan
+        // });
+
+        // Bar Chart Module
+        function main_frame(c_column, tick_bins){
+            d3.select("#bar").remove()
+            d3.select("#pie").remove()
+
+            svg = d3.select("body")
+                        .append("svg")
+                        .attr("id","bar")
+                        .attr("width", 800)
+                        .attr("height", 500)
+                        // .transition()
+                        // .duration(400);
+            svg.append("text")
+                   .attr("transform", "translate(250,0)")
+                   .attr("font-size", "20px")
+                   .attr("x", 50)
+                   .attr("y", 50)
+                   .text("Admission Analysis Bar Chart")
+
+            var g = svg.append("g")
+                        .attr("transform", "translate(" + 150 + "," + 100 + ")");
+        
+        // Parsing the data in the column
+        map = data.map(function(d,i){ return parseFloat(d[c_column]); })
+        console.log(map)
+
+        // Getting the minimum and maximum values
+        min_value_x = d3.min(map)
+        max_value_x = d3.max(map)
+
+        // Scaling X
+        var x = d3.scaleLinear()
+                .range([0, bar_width])
+                .domain([min_value_x,max_value_x]);
+
+        // tick_bins = 9
+        console.log("bar bins",tick_bins)
+        console.log(tick_bins)
+        x_text = bar_width / tick_bins
+
+        // Creating bins
+        var bins = d3.histogram()
+                    .domain(x.domain())
+                    .thresholds(tick_bins)
+                    (map);
+        console.log(bins)
+
+        // Scaling Y
+        var y = d3.scaleLinear()
+                .domain([0, d3.max(bins, function(d) { return d.length; })])
+                .range([bar_height, 0]);
+
+        
+        // Calling X-axis
+        g.append("g")
+         .attr("transform", "translate(0," + bar_height + ")")
+         .call(d3.axisBottom()
+                    .scale(x))
+         .append("text")
+         .attr("transform", "translate(250, 40)")
+         .attr("text-anchor", "end")
+         .attr("stroke", "black")
+         .text("Bin Ranges");
+         
+        // Calling Y-axis
+        g.append("g")
+         .call(d3.axisLeft()
+                    .scale(y))
+         .append("text")
+         .attr("transform", "rotate(-90)")
+         .attr("dy", "-5.1em")
+         .attr("text-anchor", "end")
+         .attr("stroke", "black")
+         .text("Counts");
+
+        // Passsing the data
+        var bar = g.selectAll(".bar")
+                .data(bins)
+                .enter().append("g")
+                .attr("class", "bar")
+                .attr("transform", function(d) { return "translate(" + x(d.x0) + "," + y(d.length) + ")"; });
+    
+    
+        bar.append("rect")
+            .attr("x", 10)
+            // .attr("y", function(d){ return d.length})
+            .attr("width", function(d){ return x(d.x1) - x(d.x0) - 15 })
+            .attr("height", function(d) { return bar_height - y(d.length); })
+            .on("mouseover", function(d,i){
+
+                temp = d3.select(this)
+                            .attr('class', 'ov');
+                temp.transition()     
+                  .duration(400)
+                  .attr('width', x(d.x1) - x(d.x0) - 8)
+                  // .attr("y", function(d) { return y(d.length) + 5; })
+                  .attr("height", function(d) { return bar_height - y(d.length) + 10; })
+                  .attr("transform","translate(0,-10)");
+
+                g.append("text")
+                 .attr('class', 'val')
+                 .attr('x', function() {
+                     return (x(bins[0].x1) - x(bins[0].x0)) * (i+1) - 30;
+                 })
+                 .attr('y', function() {
+                     return y(d.length) - 15;
+                 })
+                 .text(function() {
+                     return [+d.length]; 
+                 });                
+            })
+            .on("mouseout", function(d,i){
+                temp1= d3.select(this).attr('class', 'bar');
+
+                temp1.transition()     
+                  .duration(400)
+                  .attr('width', x(d.x1) - x(d.x0) - 15)
+                  .attr("height", function(d) { return bar_height - y(d.length); }) 
+
+                  .attr("transform","translate(0,0)");
+
+                d3.selectAll('.val')
+                  .remove();
+            })
+            bar.exit().remove();
+        };   // bar module end
+
+
+        // Pie Chart Module
+        function pie_frame(column,tick_bins){
+            d3.select("#pie").remove()
+            d3.select("#bar").remove()
+
+            svg = d3.select("body")
+                        .append("svg")
+                        .attr("id","pie")
+                        .attr("width", 800)
+                        .attr("height", 500)
+            width = svg.attr("width")
+            height = svg.attr("height")
+            radius = 160
+
+            svg.append("text")
+                   .attr("transform", "translate(250,0)")
+                   .attr("font-size", "20px")
+                   .attr("x", 40)
+                   .attr("y", 50)
+                   .text("Admission Analysis Pie Chart")
+
+            var g = svg.append("g")
+                        .attr("transform", "translate(" + 390 + "," + 270 + ")");
+
+            // Parsing the data inside the column
+            map = data.map(function(d,i){ return parseFloat(d[column]); })
+            console.log(map)
+
+            // Getting the minimum and maximum values
+            min_value_x = d3.min(map)
+            max_value_x = d3.max(map)
+
+            // Scaling X
+            var x = d3.scaleLinear()
+                .range([0, bar_width])
+                .domain([min_value_x,max_value_x]);
+
+            // Creating bins
+            var bins = d3.histogram()
+                    .domain(x.domain())
+                    .thresholds(tick_bins)
+                    (map);
+
+            console.log(bins)
+            console.log(data)
+
+            // Color scheme for Pie Arcs
+            var color = d3.scaleOrdinal(d3.schemeCategory20c);
+
+            // Creating Pie object
+            var pie_chart = d3.pie().value(function(d) {
+                            return d.length;});
+            console.log(pie_chart)
+
+            // Creating Arcs
+            var circle =  d3.arc()
+                             .outerRadius(radius)
+                             .innerRadius(0);
+
+            // This is defined for mouse-over, to increase the ARC size on hover
+            var pop_out = d3.arc()
+                             .outerRadius(radius+20)
+                             .innerRadius(0);
+
+            // Appending Data and Mouse over and Mouse out events
+            var arc = g.selectAll(".arc")
+                        .data(pie_chart(bins))
+                        .enter()
+                        .append("g")
+                        .append("path")
+                        .attr("d", circle)
+                        .attr("fill", function(d,i){  return color(i)})
+                        .on("mouseover", function(d){
+                              d3.select(this)
+                                .transition()
+                                .duration(600)
+                                .attr("d", pop_out);       
+                            // This is the pop up text
+                            pie_text.style("left",d3.event.pageX + "px")
+                                    .style("top",d3.event.pageY+ "px")
+                                    .style("display","inline-block")
+                                    .html(d.data.length)
+
+                        })
+                        .on("mouseout", function(d, i){
+                           d3.select(this)
+                            .transition()
+                            .duration(600)
+                            .attr("d", circle);
+                          pie_text.style("display","none");
+                          // d3.selectAll('.pie_text')
+                          //       .remove();
+                         });
+
+        };
+        // Initialling only Bar chart, so flag set to true
+        var flag = true;
+
+        // Getting the event, on bins change call change_frame_bins function
+        d3.select("#bin_range")
+                .on("input", change_frame_bins);
+
+        // This function is used to get the value from slider and then mass to update function
+        function change_frame_bins()
+        {
+          var tick_bins = d3.select(this)
+                                .property("value");
+          tick_bins = parseInt(tick_bins);
+          console.log(tick_bins)
+          update(tick_bins);
+        }
+
+        // This is an event handler which on click of "Pie-Bar" function, call change_frame function
+        var frame_change = d3.select("#pie_bar")
+                                .on("click", change_frame)
+
+        // This event handler is used to call update function on change of dropdown selected option
+        var drop_down = d3.select("#select_menu")
+                       .insert("select", "svg")
+                       .attr("id","dropdown")
+                       .on("change", update);
+    
+        // Getting the value got above when CSV is loaded
+        var temp = Object.keys(column_fills);
+        // Default option
+        var defaultOptionName = "GRE";
+        main_frame(defaultOptionName, tick_bins)
+        // Filling the dropdown
+        drop_down.selectAll("dropdown")
+                  .data(temp)
+                  .enter()
+                  .append("option")
+                  .attr("value", function(d){ return d; })
+                  .property("selected", function(d){ return d === defaultOptionName; })
+                  .text(function(d){ return d; })
+        // end of dropdown filling
+
+        // This is a function to update the Bar/Pie chart when a column is selected from the dropdown menu
+        function update(tick_bins){
+          value_from_dropdown = d3.select('select')
+                                    .property('value');
+          var tick_bins = d3.select("#bin_range")
+                                .property("value");
+
+          console.log("update :",tick_bins)
+          console.log(value_from_dropdown);
+
+          if (flag){
+            main_frame(value_from_dropdown,tick_bins);
+          }
+          else{
+            pie_frame(value_from_dropdown,tick_bins)
+          }
+        }
+
+        // This is a function to change between Pie/Bar, when the button is clicked
+        function change_frame()
+        {
+          var bar = d3.select("#bar");
+          var pie = d3.select("#pie");
+
+          if(flag == false){
+            bar.style("opacity", 0)
+            pie.style("opacity", 1)
+            flag = true
+          }
+          else{
+            console.log("I'm here")
+            pie.style("opacity", 0)
+            bar.style("opacity", 1)
+            flag = false
+          }
+          update(tick_bins);
+
+        }
+
+
+
+    });
+
+</script>
+</body>
+</html>

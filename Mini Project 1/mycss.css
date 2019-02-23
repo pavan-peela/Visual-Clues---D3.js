@@ -1,0 +1,94 @@
+body{
+	background-image: url("images/world.jpg");
+	
+}
+/* Buttons*/
+.container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* fraction*/
+  padding-bottom: 30px;
+  padding-top: 30px;
+}
+#pie_bar{
+	border-radius: 100px;
+	transition: 0.5s;
+	opacity: 0.6;
+ 	cursor: pointer;
+ 	border: none;
+ 	/*width: 20px;*/
+}
+#pie_bar:hover{
+	/*width:70px;
+	height:30px;*/
+	opacity: 1;
+}
+
+/* SVG Styling*/
+svg{
+	background-color: #fff;
+	padding-top: 20px;
+	
+}
+#pie,#bar{
+	background: #B8A9A9;
+   background: linear-gradient(125deg, #99E7D6, #8FADF0, #ADB0C1, #AEE4EA);
+   animation: Gradient 3s infinite;
+   overflow: hidden;
+   background-attachment: fixed;
+}
+
+.div1,.div2,.div3{
+	position: relative;
+}
+.div1{ padding-left: 300px; }
+
+.div2{
+	width: 300px;
+	padding-left: 100px;
+	opacity: 0.6;
+	transition: 0.5s;
+}
+.div2:hover{opacity:1;}
+.div3{ padding-right: 300px; }
+
+#select_menu{
+	cursor: pointer;
+	opacity: 0.8;
+}
+#select_menu:hover{
+	opacity: 1;
+}
+
+.pie_text{
+	background: #DCA1A1;
+    position: absolute;
+    display: none;
+    padding: 8px;
+    text-align: center;
+    min-width: 50px;
+    border: none;
+    border-radius: 100px;
+}
+
+/* Slider Styling*/
+input {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 15px;
+  border-radius: 5px;   
+  background: #C5C6F4;
+  outline: none;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+  cursor: pointer;
+}
+
+input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%; 
+  background: #AA798B;
+  cursor: pointer;
+}

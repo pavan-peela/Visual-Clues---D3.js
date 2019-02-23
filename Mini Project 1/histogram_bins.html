@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+<head>
+    <style>
+        .bar {
+            fill: orange;
+        }
+
+        .ov { fill: steelblue; }
+</style>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+</head>
+<body>
+<svg height="500" width="800"></svg>
+<script>
+
+    var svg = d3.select("svg")
+
+    var padding = {top:100, right:100, bottom:100, left:100}
+
+    var bar_width = svg.attr("width") - padding.left - padding.right
+
+    var bar_height = svg.attr("height") - padding.top - padding.bottom
+
+    svg.append("text")
+       .attr("transform", "translate(250,0)")
+       .attr("font-size", "20px")
+       .attr("x", 50)
+       .attr("y", 50)
+       .text("Admission Analysis")
+
+
+    var g = svg.append("g")
+            .attr("transform", "translate(" + 100 + "," + 100 + ")");
+
+    d3.csv("graduate-admissions/MOCK_DATA.csv", function(err, data) {
+        // data = data.slice(0,40)
+        console.log(data)
+        if (err) throw err
+
+        data.forEach(function(d){
+
+            // d.GRE_Score = +d.GRE_Score
+            // d.TOEFL_Score = +d.TOEFL_Score
+            // d.University_Rating = +d.University_Rating
+            // d.SOP = +d.SOP
+            // d.LOR  = +d.LOR
+            // d.CGPA  = +d.CGPA
+            // d.Chance_of_Admit  = +d.Chance_of_Admit
+            // d.Research  = +d.Research
+
+        });
+        map = data.map(function(d,i){ return parseFloat(d.GRE); })
+
+        var x = d3.scaleLinear()
+                .range([0, bar_width])
+                .domain([260,d3.max(map)]);
+
+        var bins = d3.histogram()
+                    .domain(x.domain())
+                    .thresholds(9)
+                    (map);
+        console.log(bins)
+
+        var y = d3.scaleLinear()
+                .domain([0, d3.max(bins, function(d) { return d.length; })])
+                .range([bar_height, 0]);
+
+        
+
+        g.append("g")
+         .attr("transform", "translate(0," + bar_height + ")")
+         .call(d3.axisBottom()
+                    .scale(x))
+         
+
+        g.append("g")
+         .call(d3.axisLeft()
+                    .scale(y))
+
+        var bar = g.selectAll(".bar")
+                .data(bins)
+                .enter().append("g")
+                .attr("class", "bar")
+                .attr("transform", function(d) { return "translate(" + x(d.x0) + "," + y(d.length) + ")"; });
+    
+    
+        bar.append("rect")
+            // .attr("x", 1)
+            // .attr("y", function(d){ return d.length})
+            .attr("width", function(d){ return x(d.x1) - x(d.x0) - 15 })
+            .attr("height", function(d) { return bar_height - y(d.length); })
+            .on("mouseover", function(d,i){
+
+                temp = d3.select(this).attr('class', 'ov');
+                temp.transition()     // adds animation
+                  .duration(400)
+                  // .style("width", "110%")
+                  // .style("height", "110%");
+                  // .attr('width', x(d.x1) - x(d.x0) - 5)
+                  // .attr("y", function(d) { return y(d.length) - 5; })
+                  // .attr("height", function(d) { return bar_height - y(d.length); });
+
+                g.append("text")
+                 .attr('class', 'val')
+                 .attr('x', function() {
+                     return (x(bins[0].x1) - x(bins[0].x0)) * i + 12;
+                 })
+                 .attr('y', function() {
+                     return y(d.length) - 5;
+                 })
+                 .text(function() {
+                     return [+d.length];  // Value of the text
+                 });                
+            })
+    });
+
+</script>
+</body>
+</html>
